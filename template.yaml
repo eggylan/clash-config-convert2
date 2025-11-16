@@ -153,6 +153,12 @@ dns:
     - 'geosite:cn'
     - '+.lan'
     - '+.local'
+    # FCM 相关服务，避免 fake-ip 误伤
+    - "*.googleapis.com"
+    - "*.googleusercontent.com"
+    - "*.gstatic.com"
+    - "*.google.com"
+    - "*.telegram.org"
 
   # 当 nameserver 或 nameserver-policy 没有匹配到特定域名时，或者配置中没有 fallback 时，会使用 default-nameserver 来解析
   default-nameserver:
