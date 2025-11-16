@@ -1,5 +1,5 @@
 # mihomo (Clash Meta) 懒人配置
-# 版本 V0.2-20151115
+# 版本 V0.2-20151116
 # 仓库地址：https://github.com/lzcmaro/clash-config-convert
 # 感谢clash懒人配置（https://gist.github.com/liuran001/5ca84f7def53c70b554d3f765ff86a33）的贡献
 
@@ -182,12 +182,15 @@ dns:
     'geosite:gfw':  # 被墙网站走国际 DNS
       - 'tls://dns.google'
       - 'tls://cloudflare-dns.com'
-    '+.google.com':
-      - 'tls://dns.google'
-    '+.facebook.com':
-      - 'tls://dns.google'
-    '+.youtube.com':
-      - 'tls://dns.google'
+    '+.facebook.com': https://dns.google/dns-query
+    '+.youtube.com': https://dns.google/dns-query
+    # Google / FCM / Telegram 相关请求强制走可信DNS
+    "+.googleapis.com": https://dns.google/dns-query
+    "+.firebaseio.com": https://dns.google/dns-query
+    "+.googleusercontent.com": https://dns.google/dns-query
+    "+.gstatic.com": https://dns.google/dns-query
+    "+.google.com": https://dns.google/dns-query
+    "+.telegram.org": https://cloudflare-dns.com/dns-query
 
   # 当 DNS 请求通过代理链发出时使用的上游
   proxy-server-nameserver:
@@ -370,8 +373,20 @@ rules:
   # --------------------------------------------------
   - DOMAIN,one.one.one.one,Proxies
   - DOMAIN,dns.google,Proxies
+  - DOMAIN,cloudflare-dns.com,Proxies
   # --------------------------------------------------
+  
+  # 电报 FCM 相关服务强制走代理
+  # --------------------------------------------------
+  - DOMAIN-SUFFIX,firebaseio.com,Proxies
+  - DOMAIN-SUFFIX,googleapis.com,Proxies
+  - DOMAIN-SUFFIX,googleusercontent.com,Proxies
+  - DOMAIN-SUFFIX,gstatic.com,Proxies
+  # --------------------------------------------------
+  
+  # 私有IP
   - GEOIP,private,DIRECT,no-resolve
+
   # 直连白名单
   - 'DOMAIN,dns.alidns.com,DIRECT'
   - 'DOMAIN,doh.pub,DIRECT'
