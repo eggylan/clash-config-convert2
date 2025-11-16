@@ -201,7 +201,7 @@ dns:
   # 当 DNS 请求通过代理链发出时使用的上游
   proxy-server-nameserver:
     - 'tls://dns.google'
-    - 'https://doh.pub/dns-query'
+    - 'tls://cloudflare-dns.com'
 
 # 多入站端口设置
 # listeners:
