@@ -22,7 +22,7 @@
 <body>
 
 <h2>Clash 懒人配置</h2>
-<h5>最后更新： 2025/11/16</h5>
+<h5>最后更新： 2025/11/21</h5>
 <h5>代码仓库：<a href="https://github.com/lzcmaro/clash-config-convert">https://github.com/lzcmaro/clash-config-convert</a></h5>
 <h5>无后台！只是简单的模板下载，担心订阅链接泄露的，可以随意填一个地址，下载配置文件后，自己再手动修改订阅链接即可</h5>
 
@@ -48,9 +48,11 @@ const TEMPLATE_FILE = "template.yaml";
 // 策略组数据数组：用于动态生成复选框
 const OPTIONAL_GROUPS = [
   { name: "YouTube", checked: true },
-  { name: "Netflix", checked: true },
+  { name: "Twitter", checked: false },
+  { name: "Facebook", checked: false },
   { name: "Telegram", checked: true },
   { name: "TikTok", checked: true },
+  { name: "Netflix", checked: false },
   { name: "Disney", checked: false },
   { name: "Steam", checked: false },
   { name: "PayPal", checked: false },
@@ -60,9 +62,6 @@ const OPTIONAL_GROUPS = [
   { name: "Microsoft", checked: true }, 
   { name: "Apple", checked: false },
   { name: "Binance", checked: false },
-  
-  // 如果未来你想增加新的分组，只需要在这里添加一行即可，例如：
-  // { name: "BiliBili", checked: false },
 ];
 
 /**
