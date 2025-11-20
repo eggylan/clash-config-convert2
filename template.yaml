@@ -1,5 +1,5 @@
 # mihomo (Clash Meta) 懒人配置
-# 版本 V0.2-20151116
+# 版本 V0.3-20151121
 # 仓库地址：https://github.com/lzcmaro/clash-config-convert
 # 感谢clash懒人配置（https://gist.github.com/liuran001/5ca84f7def53c70b554d3f765ff86a33）的贡献
 
@@ -144,11 +144,21 @@ tun:
 # dns 设置
 dns:
   enable: true
-  ipv6: true
+  ipv6: false
   use-hosts: true
+  use-system-hosts: true
+  # DOH 优先使用 http/3
+  prefer-h3: true 
+  # DNS 请求是否进入路由/规则链
   respect-rules: true
+  # 本地 DNS 监听端口，默认是 1053 端口
+  listen: 0.0.0.0:1053
+  # 可选缓存/TTL 设置，提高并发解析性能
+  cache-size: 4096
+  cache-ttl: 600
   enhanced-mode: fake-ip
-  fake-ip-range: 198.18.0.1/16
+  fake-ip-range: 198.18.0.0/16
+  fake-ip-filter-mode: blacklist
   fake-ip-filter:
     - 'geosite:cn'
     - '+.lan'
@@ -160,34 +170,28 @@ dns:
     - "*.google.com"
     - "*.telegram.org"
 
-  # 当 nameserver 或 nameserver-policy 没有匹配到特定域名时，或者配置中没有 fallback 时，会使用 default-nameserver 来解析
-  default-nameserver:
-    - 223.5.5.5
-    - 119.29.29.29
-    - 114.114.114.114
-
   # 默认使用国内 DNS（加速国内访问）
   nameserver:
-    - 'https://dns.alidns.com/dns-query'
-    - 'https://doh.pub/dns-query'
+    - https://doh.pub/dns-query
+    - https://dns.alidns.com/dns-query
 
   # 回退 DNS（当主上游失败时使用国际可用 DoH/DoT）
   fallback:
     # ip 方式容易被干扰、阻止
     #- 'tls://1.1.1.1'
     #- 'tls://8.8.8.8'
-    - 'https://one.one.one.one/dns-query' # Cloudflare DoH (走 443 端口)
-    - 'https://dns.google/dns-query'      # Google DoH (走 443 端口)
-    - 'https://doh.pub/dns-query'         # 阿里云的 DoH 备用，通常用于国内解析
+    - https://one.one.one.one/dns-query # Cloudflare DoH (走 443 端口)
+    - https://dns.google/dns-query      # Google DoH (走 443 端口)
+    - https://doh.pub/dns-query         # 阿里云的 DoH 备用，通常用于国内解析
 
   # 特殊域名走专用解析策略
   nameserver-policy:
     'geosite:cn':  # 国内网站优先国内 DNS
-      - 'https://dns.alidns.com/dns-query'
-      - 'https://doh.pub/dns-query'
+      - https://doh.pub/dns-query
+      - https://dns.alidns.com/dns-query
     'geosite:gfw':  # 被墙网站走国际 DNS
-      - 'tls://dns.google'
-      - 'tls://cloudflare-dns.com'
+      - https://dns.google/dns-query
+      - https://cloudflare-dns.com/dns-query
     '+.facebook.com': https://dns.google/dns-query
     '+.youtube.com': https://dns.google/dns-query
     # Google / FCM / Telegram 相关请求强制走可信DNS
@@ -200,8 +204,9 @@ dns:
 
   # 当 DNS 请求通过代理链发出时使用的上游
   proxy-server-nameserver:
-    - 'tls://dns.google'
-    - 'https://doh.pub/dns-query'
+    - https://doh.pub/dns-query
+    - https://dns.google/dns-query
+    - https://cloudflare-dns.com/dns-query
 
 # 多入站端口设置
 # listeners:
@@ -252,8 +257,15 @@ proxy-groups:
       - Proxies
     <<: *use
 
-  - name: Netflix
-    icon: https://raw.githubusercontent.com/NB921/picture/refs/heads/main/Netflix.png
+  - name: Twitter
+    icon: https://raw.githubusercontent.com/NB921/picture/refs/heads/main/Twitter1.png
+    exclude-filter: *GL
+    proxies:
+      - Proxies
+    <<: *use
+
+  - name: Facebook
+    icon: https://raw.githubusercontent.com/NB921/picture/refs/heads/main/Facebook.png
     exclude-filter: *GL
     proxies:
       - Proxies
@@ -268,6 +280,13 @@ proxy-groups:
 
   - name: TikTok
     icon: https://raw.githubusercontent.com/NB921/picture/refs/heads/main/Tiktok.png
+    exclude-filter: *GL
+    proxies:
+      - Proxies
+    <<: *use
+
+  - name: Netflix
+    icon: https://raw.githubusercontent.com/NB921/picture/refs/heads/main/Netflix.png
     exclude-filter: *GL
     proxies:
       - Proxies
@@ -375,13 +394,6 @@ proxy-groups:
     interval: 600
 
 rules:
-  # 强制 Cloudflare/Google 加密 DNS 走代理
-  # --------------------------------------------------
-  - DOMAIN,one.one.one.one,Proxies
-  - DOMAIN,dns.google,Proxies
-  - DOMAIN,cloudflare-dns.com,Proxies
-  # --------------------------------------------------
-  
   # 电报 FCM 相关服务强制走代理
   # --------------------------------------------------
   - DOMAIN-SUFFIX,firebaseio.com,Proxies
@@ -428,9 +440,11 @@ rules:
   - 'DOMAIN-SUFFIX,report.bntrace.com,Binance'
   - GEOSITE,binance,Binance
   - GEOSITE,youtube,YouTube
-  - GEOSITE,netflix,Netflix
+  - GEOSITE,twitter,Twitter
+  - GEOSITE,facebook,Facebook
   - GEOSITE,telegram,Telegram
   - GEOSITE,tiktok,TikTok
+  - GEOSITE,netflix,Netflix
   - GEOSITE,disney,Disney
   - GEOSITE,steam,Steam
   - GEOSITE,paypal,PayPal
