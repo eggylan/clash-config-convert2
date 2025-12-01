@@ -1,5 +1,5 @@
 # mihomo (Clash Meta) 懒人配置
-# 版本 V0.3-20151121
+# 版本 V0.3-20151202
 # 仓库地址：https://github.com/lzcmaro/clash-config-convert
 # 感谢clash懒人配置（https://gist.github.com/liuran001/5ca84f7def53c70b554d3f765ff86a33）的贡献
 
@@ -397,9 +397,6 @@ rules:
   # 电报 FCM 相关服务强制走代理
   # --------------------------------------------------
   - DOMAIN-SUFFIX,firebaseio.com,Proxies
-  - DOMAIN-SUFFIX,googleapis.com,Proxies
-  - DOMAIN-SUFFIX,googleusercontent.com,Proxies
-  - DOMAIN-SUFFIX,gstatic.com,Proxies
   # --------------------------------------------------
   
   # 私有IP
