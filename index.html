@@ -3,49 +3,480 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Clash 懒人配置生成器</title>
+<title>Clash 配置工坊 Pro</title>
 <style>
-  body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial;max-width:800px;margin:40px auto;padding:0 16px;}
-  label{display:block;font-size:15px;margin-top:14px;}
-  input[type="text"], input[type="url"]{width:100%;padding:8px 10px;font-size:15px;box-sizing:border-box;border: 1px solid #ccc; border-radius: 4px;}
-  button{margin-top:18px;padding:8px 14px;font-size:15px;cursor:pointer;background-color: #007bff; color: white; border: none; border-radius: 4px; margin-right: 10px;}
-  button:hover { background-color: #0056b3; }
-  pre{background:#f5f5f5;padding:12px;border-radius:6px;margin-top:20px;white-space:pre-wrap;word-break:break-word;max-height:500px;overflow:auto;}
-  
-  fieldset { border: 1px solid #ddd; border-radius: 6px; padding: 10px 16px 16px; margin-top: 20px; }
-  legend { font-size: 16px; font-weight: 600; padding: 0 6px; }
-  .group-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
-  .group-grid label { display: flex; align-items: center; margin-top: 0; font-size: 14px; }
-  .group-grid input { margin-right: 6px; }
+  @import url("https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;600&display=swap");
+
+  :root {
+    --bg-1: #fffef7;
+    --bg-2: #fff4e8;
+    --bg-3: #e8f5ff;
+    --card: rgba(255, 255, 255, 0.84);
+    --panel: rgba(255, 255, 255, 0.92);
+    --text: #192133;
+    --muted: #5f6878;
+    --line: rgba(63, 84, 120, 0.18);
+    --accent: #e35f2f;
+    --accent-2: #2a589c;
+    --accent-soft: rgba(227, 95, 47, 0.14);
+    --danger: #c5393a;
+    --mono-bg: #141a25;
+    --mono-text: #d8f9e0;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    color: var(--text);
+    font-family: "Noto Sans SC", "PingFang SC", sans-serif;
+    background:
+      radial-gradient(circle at 4% 8%, #ffe5d5 0%, transparent 38%),
+      radial-gradient(circle at 92% 10%, #dcf2ff 0%, transparent 36%),
+      linear-gradient(145deg, var(--bg-1), var(--bg-2) 52%, var(--bg-3));
+    padding: 24px 14px 38px;
+  }
+
+  .app {
+    max-width: 1080px;
+    margin: 0 auto;
+    border: 1px solid var(--line);
+    background: var(--card);
+    border-radius: 24px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 22px 48px rgba(37, 49, 77, 0.14);
+    overflow: hidden;
+  }
+
+  .hero {
+    padding: 24px 22px 18px;
+    border-bottom: 1px solid var(--line);
+    background: linear-gradient(126deg, rgba(227, 95, 47, 0.12), rgba(42, 88, 156, 0.08));
+  }
+
+  h1 {
+    margin: 0;
+    font-size: clamp(24px, 3.8vw, 38px);
+    font-family: "Space Grotesk", "Noto Sans SC", sans-serif;
+    line-height: 1.1;
+  }
+
+  .subtitle {
+    margin: 8px 0 0;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.65;
+  }
+
+  .subtitle a {
+    color: var(--accent-2);
+    text-decoration: none;
+    border-bottom: 1px dashed rgba(42, 88, 156, 0.45);
+  }
+
+  .layout {
+    padding: 16px;
+    display: grid;
+    gap: 12px;
+  }
+
+  .panel {
+    border: 1px solid #d8e1f0;
+    background: var(--panel);
+    border-radius: 16px;
+    padding: 12px;
+  }
+
+  .panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+  }
+
+  .panel h2 {
+    margin: 0;
+    font-size: 18px;
+    color: #203553;
+  }
+
+  .hint {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  .mini-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    border: none;
+    border-radius: 10px;
+    padding: 9px 12px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 120ms ease, box-shadow 150ms ease, background-color 150ms ease;
+  }
+
+  .btn:hover { transform: translateY(-1px); }
+
+  .btn-main {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 9px 18px rgba(227, 95, 47, 0.28);
+  }
+
+  .btn-ghost {
+    background: #fff;
+    border: 1px solid #d2dced;
+    color: #344863;
+  }
+
+  .btn-danger {
+    background: #fff5f5;
+    border: 1px solid #f0c7c7;
+    color: var(--danger);
+  }
+
+  .subs-list {
+    display: grid;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .sub-row {
+    display: grid;
+    grid-template-columns: 1.1fr 2fr 1fr auto auto;
+    gap: 8px;
+    padding: 9px;
+    border: 1px solid #dce5f3;
+    border-radius: 12px;
+    background: #fff;
+    align-items: end;
+  }
+
+  .field { display: grid; gap: 5px; }
+
+  .field label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #4e607a;
+  }
+
+  input[type="text"],
+  input[type="url"],
+  input[type="number"],
+  textarea {
+    width: 100%;
+    border: 1px solid #ccd8ed;
+    background: #fff;
+    border-radius: 10px;
+    padding: 9px 10px;
+    font-size: 14px;
+    color: #1f2b42;
+    outline: none;
+    transition: border-color 160ms ease, box-shadow 160ms ease;
+  }
+
+  input:focus,
+  textarea:focus {
+    border-color: #79a1df;
+    box-shadow: 0 0 0 4px rgba(121, 161, 223, 0.2);
+  }
+
+  textarea {
+    min-height: 96px;
+    resize: vertical;
+  }
+
+  .row-check {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    color: #445877;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .row-check input,
+  .inline-check input,
+  .group-grid input {
+    accent-color: var(--accent-2);
+  }
+
+  details {
+    margin-top: 10px;
+    border: 1px dashed #cad7ec;
+    border-radius: 12px;
+    background: #f9fbff;
+    padding: 8px;
+  }
+
+  summary {
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 700;
+    color: #324863;
+  }
+
+  .group-tools {
+    display: grid;
+    grid-template-columns: 1.5fr auto;
+    gap: 8px;
+    margin-top: 8px;
+    margin-bottom: 10px;
+  }
+
+  .group-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 8px;
+  }
+
+  .group-grid label {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    border: 1px solid #d9e2f1;
+    border-radius: 10px;
+    padding: 8px 10px;
+    background: #fff;
+    font-size: 13px;
+    color: #344863;
+    font-weight: 600;
+  }
+
+  .group-grid label.is-hidden { display: none; }
+
+  .advanced-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .advanced-grid .full { grid-column: 1 / -1; }
+
+  .inline-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 10px;
+    border: 1px solid #ccd8ed;
+    border-radius: 10px;
+    background: #fff;
+    height: 40px;
+  }
+
+  .actions {
+    display: flex;
+    gap: 9px;
+    flex-wrap: wrap;
+  }
+
+  .summary {
+    margin-top: 8px;
+    border: 1px solid #f0decb;
+    border-radius: 10px;
+    background: var(--accent-soft);
+    color: #763f2a;
+    padding: 8px 10px;
+    font-size: 13px;
+    line-height: 1.55;
+  }
+
+  pre {
+    margin: 10px 0 0;
+    border-radius: 14px;
+    padding: 15px;
+    max-height: 520px;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-family: "JetBrains Mono", Consolas, monospace;
+    font-size: 13px;
+    line-height: 1.65;
+    color: var(--mono-text);
+    background: linear-gradient(160deg, #111a27, var(--mono-bg));
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  }
+
+  @media (max-width: 920px) {
+    .sub-row { grid-template-columns: 1fr 1fr; }
+    .advanced-grid { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 640px) {
+    body { padding: 16px 10px 22px; }
+    .hero { padding: 20px 16px 16px; }
+    .layout { padding: 10px; }
+    .group-tools { grid-template-columns: 1fr; }
+    .actions .btn,
+    .mini-actions .btn { width: 100%; }
+  }
 </style>
 </head>
 <body>
 
-<h2>Clash 懒人配置</h2>
-<h5>最后更新： 2025/11/21</h5>
-<h5>代码仓库：<a href="https://github.com/lzcmaro/clash-config-convert">https://github.com/lzcmaro/clash-config-convert</a></h5>
-<h5>无后台！只是简单的模板下载，担心订阅链接泄露的，可以随意填一个地址，下载配置文件后，自己再手动修改订阅链接即可</h5>
+<main class="app">
+  <header class="hero">
+    <h1>Clash 配置工坊 Pro</h1>
+    <p class="subtitle">大改版：多订阅聚合 + 高级参数注入 + 策略组批量治理，直接从模板生成可下载 YAML。</p>
+    <p class="subtitle">最后更新：2026/04/01</p>
+    <p class="subtitle">仓库：<a href="https://github.com/lzcmaro/clash-config-convert" target="_blank" rel="noopener noreferrer">github.com/lzcmaro/clash-config-convert</a></p>
+    <p class="subtitle">仅下载模板并在本地处理。若担心订阅泄露，可先填占位地址，下载后再手改。</p>
+  </header>
 
-<label for="subName">订阅名称</label>
-<input id="subName" type="text" placeholder="例如：订阅一 / MySub"/>
+  <section class="layout">
+    <section class="panel">
+      <div class="panel-head">
+        <h2>1. 多订阅管理</h2>
+        <div class="mini-actions">
+          <button id="btnAddSub" class="btn btn-main" type="button">新增订阅</button>
+          <button id="btnClearSubs" class="btn btn-danger" type="button">清空链接</button>
+        </div>
+      </div>
+      <p class="hint">每个订阅可独立设置名称、链接、前缀与启用状态。启用项会被写入 use 和 proxy-providers。</p>
+      <div id="subsContainer" class="subs-list"></div>
 
-<label for="subUrl">订阅链接</label>
-<input id="subUrl" type="url" placeholder="https://xxx.yyyy/your/sub"/>
+      <details>
+        <summary>批量导入订阅</summary>
+        <p class="hint">每行一个。支持 名称,链接,前缀 或 名称|链接|前缀；只写链接时自动命名。</p>
+        <textarea id="batchInput" placeholder="订阅一,https://a.com/sub,[A]
+订阅二|https://b.com/sub|[B]
+https://c.com/sub"></textarea>
+        <div class="mini-actions" style="margin-top:8px;">
+          <button id="btnImportBatch" class="btn btn-ghost" type="button">追加导入</button>
+          <button id="btnReplaceBatch" class="btn btn-ghost" type="button">覆盖导入</button>
+        </div>
+      </details>
+    </section>
 
-<fieldset>
-  <legend>选择策略组</legend>
-  <div class="group-grid" id="proxyGroupCheckboxes"></div>
-</fieldset>
+    <section class="panel">
+      <div class="panel-head">
+        <h2>2. 策略组选择</h2>
+        <div class="mini-actions">
+          <button id="btnGroupAll" class="btn btn-ghost" type="button">全选</button>
+          <button id="btnGroupNone" class="btn btn-ghost" type="button">全不选</button>
+          <button id="btnGroupDefault" class="btn btn-ghost" type="button">恢复默认</button>
+        </div>
+      </div>
+      <div class="group-tools">
+        <input id="groupSearch" type="text" placeholder="搜索策略组，例如 Steam / OpenAI"/>
+        <p class="hint">不勾选的策略组会连同相关规则一并删除。</p>
+      </div>
+      <div class="group-grid" id="proxyGroupCheckboxes"></div>
+    </section>
 
-<button id="btnGenerate">生成并下载 YAML</button>
-<button id="btnPreview">仅预览</button>
+    <section class="panel">
+      <div class="panel-head">
+        <h2>3. 高级设置</h2>
+      </div>
+      <div class="advanced-grid">
+        <div class="field">
+          <label for="outputFilename">输出文件名</label>
+          <input id="outputFilename" type="text" value="config" placeholder="例如 my-clash-config"/>
+        </div>
 
-<pre id="result">结果会显示在这里</pre>
+        <div class="field">
+          <label>下载文件</label>
+          <label class="inline-check"><input id="appendTimestamp" type="checkbox" checked/> 追加时间戳</label>
+        </div>
+
+        <div class="field">
+          <label for="providerInterval">订阅更新间隔（秒）</label>
+          <input id="providerInterval" type="number" min="60" step="60" value="86400"/>
+        </div>
+
+        <div class="field">
+          <label for="healthCheckUrl">健康检查 URL</label>
+          <input id="healthCheckUrl" type="url" value="https://cp.cloudflare.com"/>
+        </div>
+
+        <div class="field">
+          <label for="healthCheckInterval">健康检查间隔（秒）</label>
+          <input id="healthCheckInterval" type="number" min="60" step="60" value="1800"/>
+        </div>
+
+        <div class="field">
+          <label for="healthCheckTimeout">健康检查超时（毫秒）</label>
+          <input id="healthCheckTimeout" type="number" min="100" step="100" value="2000"/>
+        </div>
+
+        <div class="field">
+          <label for="healthCheckTolerance">健康检查容差（毫秒）</label>
+          <input id="healthCheckTolerance" type="number" min="0" step="10" value="300"/>
+        </div>
+
+        <div class="field">
+          <label>本地配置注入</label>
+          <label class="inline-check"><input id="includeLocalConfig" type="checkbox"/> 将本地配置加入 use 与 proxy-providers</label>
+        </div>
+
+        <div class="field">
+          <label for="localConfigName">本地配置名称</label>
+          <input id="localConfigName" type="text" value="本地配置" disabled/>
+        </div>
+
+        <div class="field">
+          <label for="localConfigPath">本地配置路径</label>
+          <input id="localConfigPath" type="text" value="./proxy_provider/本地配置.yaml" disabled/>
+        </div>
+
+        <div class="field full">
+          <label for="localConfigPrefix">本地配置前缀（可选）</label>
+          <input id="localConfigPrefix" type="text" placeholder="例如 [LOCAL]" disabled/>
+        </div>
+
+        <div class="field full">
+          <label for="glFilter">过滤节点锚点（&GL）</label>
+          <input id="glFilter" type="text"/>
+        </div>
+
+        <div class="field full">
+          <label for="openaiFilter">OpenAI 锚点（&OPENAI）</label>
+          <input id="openaiFilter" type="text"/>
+        </div>
+
+        <div class="field full">
+          <label for="extraGroupRemovals">额外删除策略组（逗号/分号/换行分隔）</label>
+          <input id="extraGroupRemovals" type="text" placeholder="例如 MyCustomGroup, TestGroup"/>
+        </div>
+
+        <div class="field full">
+          <label for="extraRuleRemovals">额外删除规则目标（逗号/分号/换行分隔）</label>
+          <input id="extraRuleRemovals" type="text" placeholder="例如 MyCustomRuleGroup"/>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="actions">
+        <button id="btnGenerate" class="btn btn-main" type="button">生成并下载 YAML</button>
+        <button id="btnPreview" class="btn btn-ghost" type="button">仅预览</button>
+        <button id="btnCopy" class="btn btn-ghost" type="button">复制结果</button>
+      </div>
+      <div id="summary" class="summary">等待生成...</div>
+      <pre id="result">结果会显示在这里</pre>
+    </section>
+  </section>
+</main>
 
 <script>
-const TEMPLATE_FILE = "template.yaml"; 
+const TEMPLATE_FILE = "template.yaml";
 
-// 策略组数据数组：用于动态生成复选框
+const DEFAULT_GL_FILTER = "跳转|长期|导入|节点|流量|轮询|群|邀请|返利|循环|官网|客服|网站|网址|获取|订阅|失联|到期|JC|下次|版本|官址|备用|过期|已用|联系|邮箱|工单|贩卖|通知|倒卖|防止|国内|地址|频道|无法|说明|使用|页面|提示|特别|访问|支持|教程|关注|更新|作者|加入|.com|USE|USED|TOTAL|EXPIRE|EMAIL|Panel|Channel|Author";
+const DEFAULT_OPENAI_FILTER = "香港|🇭🇰|HK|Hong|跳转|长期|导入|节点|流量|轮询|群|邀请|返利|循环|官网|客服|网站|网址|获取|订阅|失联|到期|JC|下次|版本|官址|备用|过期|已用|联系|邮箱|工单|贩卖|通知|倒卖|防止|国内|地址|频道|无法|说明|使用|页面|提示|特别|访问|支持|教程|关注|更新|作者|加入|.com|USE|USED|TOTAL|EXPIRE|EMAIL|Panel|Channel|Author";
+
 const OPTIONAL_GROUPS = [
   { name: "YouTube", checked: true },
   { name: "Twitter", checked: false },
@@ -54,116 +485,460 @@ const OPTIONAL_GROUPS = [
   { name: "TikTok", checked: true },
   { name: "Netflix", checked: false },
   { name: "Disney", checked: false },
-  { name: "Steam", checked: false },
+  {
+    name: "Steam",
+    checked: false,
+    groupTargets: ["Steam", "Steam-GameDownload"],
+    ruleTargets: ["Steam", "Steam-GameDownload"],
+  },
   { name: "PayPal", checked: false },
   { name: "OpenAI", checked: true },
   { name: "Github", checked: false },
   { name: "Google", checked: true },
-  { name: "Microsoft", checked: true }, 
+  { name: "Microsoft", checked: true },
   { name: "Apple", checked: false },
   { name: "Binance", checked: false },
 ];
 
-/**
- * 动态渲染策略组复选框
- */
-function renderGroupCheckboxes() {
-  const container = document.getElementById("proxyGroupCheckboxes");
-  if (!container) return;
+const OPTIONAL_GROUP_MAP = OPTIONAL_GROUPS.reduce((acc, item) => {
+  acc[item.name] = item;
+  return acc;
+}, {});
 
-  container.innerHTML = OPTIONAL_GROUPS.map(group => `
-    <label>
-      <input type="checkbox" value="${group.name}" ${group.checked ? 'checked' : ''}> 
-      ${group.name}
-    </label>
-  `).join('');
+let idSeed = 0;
+let subscriptions = [newSub({ name: "订阅一", url: "", prefix: "", enabled: true })];
+let lastGeneratedYaml = "";
+
+function newSub(data = {}) {
+  idSeed += 1;
+  return {
+    id: data.id || idSeed,
+    name: (data.name || "").trim(),
+    url: (data.url || "").trim(),
+    prefix: (data.prefix || "").trim(),
+    enabled: data.enabled !== false,
+  };
 }
 
-// 页面加载完成后立即执行渲染
-document.addEventListener('DOMContentLoaded', renderGroupCheckboxes);
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function escapeRegExp(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function escapeYamlDoubleQuoted(value) {
+  return String(value).replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+}
+
+function parseIntSafe(value, fallback, min, max) {
+  const n = Number.parseInt(value, 10);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.min(max, Math.max(min, n));
+}
+
+function splitTargets(raw) {
+  return raw.split(/[\n,，;；|]/).map(v => v.trim()).filter(Boolean);
+}
+
+function ensureHttpUrl(url, name) {
+  try {
+    const u = new URL(url);
+    if (!["http:", "https:"].includes(u.protocol)) throw new Error();
+  } catch {
+    throw new Error("订阅 " + name + " 的链接无效，请填写 http(s) 地址");
+  }
+}
+
+function renderSubs() {
+  const wrap = document.getElementById("subsContainer");
+  wrap.innerHTML = subscriptions.map((sub, idx) => `
+    <div class="sub-row" data-id="${sub.id}">
+      <div class="field">
+        <label>订阅名称</label>
+        <input class="sub-name" type="text" value="${escapeHtml(sub.name)}" placeholder="例如：订阅${idx + 1}"/>
+      </div>
+      <div class="field">
+        <label>订阅链接</label>
+        <input class="sub-url" type="url" value="${escapeHtml(sub.url)}" placeholder="https://example.com/sub"/>
+      </div>
+      <div class="field">
+        <label>节点前缀（可选）</label>
+        <input class="sub-prefix" type="text" value="${escapeHtml(sub.prefix)}" placeholder="例如 [A]"/>
+      </div>
+      <label class="row-check"><input class="sub-enabled" type="checkbox" ${sub.enabled ? "checked" : ""}/>启用</label>
+      <button class="btn btn-danger btn-remove-sub" type="button">删除</button>
+    </div>
+  `).join("");
+}
+
+function readSubsFromDom() {
+  return Array.from(document.querySelectorAll(".sub-row")).map(row => ({
+    id: Number(row.dataset.id),
+    name: row.querySelector(".sub-name").value.trim(),
+    url: row.querySelector(".sub-url").value.trim(),
+    prefix: row.querySelector(".sub-prefix").value.trim(),
+    enabled: row.querySelector(".sub-enabled").checked,
+  }));
+}
+
+function syncSubs() {
+  subscriptions = readSubsFromDom();
+}
+
+function renderGroups() {
+  const wrap = document.getElementById("proxyGroupCheckboxes");
+  wrap.innerHTML = OPTIONAL_GROUPS.map(group => `
+    <label data-name="${group.name.toLowerCase()}">
+      <input type="checkbox" value="${group.name}" ${group.checked ? "checked" : ""}/>
+      ${group.name}
+    </label>
+  `).join("");
+}
+
+function dedupeNames(enabledSubs) {
+  const used = new Set();
+  return enabledSubs.map((sub, i) => {
+    const base = (sub.name || ("订阅" + (i + 1))).trim() || ("订阅" + (i + 1));
+    let name = base;
+    let idx = 2;
+    while (used.has(name)) {
+      name = base + "-" + idx;
+      idx += 1;
+    }
+    used.add(name);
+    return { ...sub, name };
+  });
+}
+
+function buildProviderAnchor(settings) {
+  return [
+    "p: &p",
+    "  type: http",
+    "  # 自动更新订阅时间，单位为秒",
+    "  interval: " + settings.providerInterval,
+    "  # 订阅节点可用性检查",
+    "  health-check:",
+    "    enable: true",
+    "    url: \"" + escapeYamlDoubleQuoted(settings.healthCheckUrl) + "\"",
+    "    # 节点连通性检测时间，单位为秒",
+    "    interval: " + settings.healthCheckInterval,
+    "    # 节点超时延迟，单位为毫秒",
+    "    timeout: " + settings.healthCheckTimeout,
+    "    # 节点自动切换差值，单位为毫秒",
+    "    tolerance: " + settings.healthCheckTolerance,
+    "",
+  ].join("\n");
+}
+
+function replaceBlock(content, regex, replacement, blockName) {
+  const out = content.replace(regex, replacement);
+  if (out === content) throw new Error("模板中未找到 " + blockName + " 区块");
+  return out;
+}
+
+function buildUseProvidersBlock(subs, settings) {
+  const enabledSubs = dedupeNames(subs.filter(s => s.enabled));
+  if (!enabledSubs.length) throw new Error("至少需要启用一个订阅");
+
+  enabledSubs.forEach((sub, i) => {
+    if (!sub.name) throw new Error("第 " + (i + 1) + " 个启用订阅缺少名称");
+    if (!sub.url) throw new Error("订阅 " + sub.name + " 缺少链接");
+    ensureHttpUrl(sub.url, sub.name);
+  });
+
+  const useTargets = enabledSubs.map(s => s.name);
+  if (settings.includeLocalConfig) useTargets.push(settings.localConfigName);
+
+  const lines = [
+    "# 订阅名，记得修改成自己的",
+    "# 添删订阅在这里和下方订阅链接依葫芦画瓢就行",
+    "use: &use",
+    "  type: select",
+    "  use:",
+  ...useTargets.map(name => "    - \"" + escapeYamlDoubleQuoted(name) + "\""),
+    "",
+    "# 订阅链接",
+    "# 对于订阅来说，path 为选填项，但建议启用",
+    "# 本地配置可以只填 path",
+    "proxy-providers:",
+  ];
+
+  enabledSubs.forEach(sub => {
+    lines.push("  \"" + escapeYamlDoubleQuoted(sub.name) + "\":");
+    lines.push("    <<: *p");
+    lines.push("    url: \"" + escapeYamlDoubleQuoted(sub.url) + "\"");
+    if (sub.prefix) {
+      lines.push("    override:");
+      lines.push("      additional-prefix: \"" + escapeYamlDoubleQuoted(sub.prefix) + "\"");
+    }
+    lines.push("");
+  });
+
+  if (settings.includeLocalConfig) {
+    lines.push("  \"" + escapeYamlDoubleQuoted(settings.localConfigName) + "\":");
+    lines.push("    <<: *p");
+    lines.push("    path: \"" + escapeYamlDoubleQuoted(settings.localConfigPath) + "\"");
+    if (settings.localConfigPrefix) {
+      lines.push("    override:");
+      lines.push("      additional-prefix: \"" + escapeYamlDoubleQuoted(settings.localConfigPrefix) + "\"");
+    }
+    lines.push("");
+  }
+
+  return {
+    mergedBlock: lines.join("\n"),
+    enabledCount: enabledSubs.length,
+    useCount: useTargets.length,
+  };
+}
+
+function readSettings() {
+  return {
+    outputFilename: document.getElementById("outputFilename").value.trim(),
+    appendTimestamp: document.getElementById("appendTimestamp").checked,
+    providerInterval: parseIntSafe(document.getElementById("providerInterval").value, 86400, 60, 604800),
+    healthCheckUrl: document.getElementById("healthCheckUrl").value.trim() || "https://cp.cloudflare.com",
+    healthCheckInterval: parseIntSafe(document.getElementById("healthCheckInterval").value, 1800, 60, 86400),
+    healthCheckTimeout: parseIntSafe(document.getElementById("healthCheckTimeout").value, 2000, 100, 20000),
+    healthCheckTolerance: parseIntSafe(document.getElementById("healthCheckTolerance").value, 300, 0, 20000),
+    glFilter: document.getElementById("glFilter").value.trim() || DEFAULT_GL_FILTER,
+    openaiFilter: document.getElementById("openaiFilter").value.trim() || DEFAULT_OPENAI_FILTER,
+    includeLocalConfig: document.getElementById("includeLocalConfig").checked,
+    localConfigName: document.getElementById("localConfigName").value.trim() || "本地配置",
+    localConfigPath: document.getElementById("localConfigPath").value.trim() || "./proxy_provider/本地配置.yaml",
+    localConfigPrefix: document.getElementById("localConfigPrefix").value.trim(),
+    extraGroupRemovals: splitTargets(document.getElementById("extraGroupRemovals").value),
+    extraRuleRemovals: splitTargets(document.getElementById("extraRuleRemovals").value),
+  };
+}
+
+function gatherRemovalTargets(settings) {
+  const groupTargets = new Set(settings.extraGroupRemovals);
+  const ruleTargets = new Set(settings.extraRuleRemovals);
+
+  document.querySelectorAll("#proxyGroupCheckboxes input[type='checkbox']").forEach(el => {
+    if (el.checked) return;
+    const cfg = OPTIONAL_GROUP_MAP[el.value] || { name: el.value };
+    (cfg.groupTargets || [cfg.name]).forEach(v => groupTargets.add(v));
+    (cfg.ruleTargets || [cfg.name]).forEach(v => ruleTargets.add(v));
+  });
+
+  return { groupTargets, ruleTargets };
+}
+
+function removeGroupsRules(yaml, groupTargets, ruleTargets) {
+  let out = yaml;
+
+  Array.from(groupTargets).forEach(groupName => {
+    const escaped = escapeRegExp(groupName);
+    const groupRegex = new RegExp("\\n\\s*-\\s*name:\\s*" + escaped + "\\s*(?:\\n|$)[\\s\\S]*?(?=\\n\\s*-\\s*name:|\\n\\s*rules:)", "g");
+    out = out.replace(groupRegex, "");
+  });
+
+  Array.from(ruleTargets).forEach(target => {
+    const escaped = escapeRegExp(target);
+    const ruleRegex = new RegExp("\\n\\s*-\\s*[^\\n]*,\\s*" + escaped + "(?=\\s*(?:,|'|$))[^\\n]*", "g");
+    out = out.replace(ruleRegex, "");
+  });
+
+  return out.replace(/\n{3,}/g, "\n\n");
+}
+
+function normalizeFilename(base, appendTs) {
+  let name = (base || "config").trim() || "config";
+  if (appendTs) {
+    const now = new Date();
+    const pad = n => String(n).padStart(2, "0");
+    name += "-" + now.getFullYear() + pad(now.getMonth() + 1) + pad(now.getDate()) + "-" + pad(now.getHours()) + pad(now.getMinutes());
+  }
+  if (!/\.ya?ml$/i.test(name)) name += ".yaml";
+  return name;
+}
 
 async function loadTemplate() {
-  const res = await fetch(TEMPLATE_FILE + '?_=' + Date.now()); // 加时间戳防止缓存
+  if (location.protocol === "file:") {
+    throw new Error("请通过本地 HTTP 服务访问页面，例如在当前目录运行：python -m http.server");
+  }
+  const res = await fetch(TEMPLATE_FILE + "?_=" + Date.now());
   if (!res.ok) throw new Error("读取 " + TEMPLATE_FILE + " 失败");
   return res.text();
 }
 
-// 原始的简单替换函数
-function replaceTemplate(template, name, url) {
-  return template
-    .split("{{SUB_NAME}}").join(name)
-    .split("{{SUB_URL}}").join(url);
+function applySettings(template, settings, mergedBlock) {
+  let out = template.replace(/\r\n/g, "\n");
+  out = replaceBlock(out, /p:\s*&p[\s\S]*?(?=\n# 基础配置)/, buildProviderAnchor(settings), "p: &p");
+  out = replaceBlock(out, /use:\s*&use[\s\S]*?(?=\n# 小白请不要继续随意修改以下设置)/, mergedBlock + "\n", "use/proxy-providers");
+  out = replaceBlock(out, /^过滤节点:\s*&GL\s*".*"\s*$/m, "过滤节点: &GL \"" + escapeYamlDoubleQuoted(settings.glFilter) + "\"", "过滤节点");
+  out = replaceBlock(out, /^openai:\s*&OPENAI\s*".*"\s*$/m, "openai: &OPENAI \"" + escapeYamlDoubleQuoted(settings.openaiFilter) + "\"", "openai");
+  return out;
 }
 
-async function generate(download = false) {
-  const name = document.getElementById("subName").value.trim();
-  const url = document.getElementById("subUrl").value.trim();
+function setSummary(text) {
+  document.getElementById("summary").textContent = text;
+}
+
+async function generate(download) {
+  syncSubs();
+  const settings = readSettings();
   const resultEl = document.getElementById("result");
 
-  if (!name || !url) {
-    alert("请填写订阅名称与订阅链接");
-    return;
-  }
-
-  // 1. 获取所有未被勾选的策略组
-  const groupsToRemove = [];
-  document.querySelectorAll("#proxyGroupCheckboxes input[type='checkbox']").forEach(el => {
-    if (!el.checked) {
-      groupsToRemove.push(el.value);
-    }
-  });
-  
   try {
-    // 2. 加载模板
-    let templateString = await loadTemplate();
-    
-    // 3. 替换订阅占位符
-    let finalYaml = replaceTemplate(templateString, name, url);
+    const template = await loadTemplate();
+    const { mergedBlock, enabledCount, useCount } = buildUseProvidersBlock(subscriptions, settings);
+    let yaml = applySettings(template, settings, mergedBlock);
 
-    // 4. 遍历所有要移除的组，使用正则表达式“删除”相关文本块
-    groupsToRemove.forEach(groupName => {
-      // 4.1. 构建正则表达式来删除 `proxy-groups` 中的条目
-      // 匹配从 `- name: GroupName` 开始，直到下一个 `- name:` 或 `rules:` 之前的所有内容
-      // [\\s\\S]*? 是非贪婪匹配，包括换行符
-      // (?= ... ) 是正向先行断言，确保我们只匹配到下一个组的开头，而不包括它
-      const groupRegex = new RegExp(`\\n\\s*-\\s*name:\\s*${groupName}[\\s\\S]*?(?=\\n\\s*-\\s*name:|\\n\\s*rules:)`, 'g');
-      finalYaml = finalYaml.replace(groupRegex, '');
+    const { groupTargets, ruleTargets } = gatherRemovalTargets(settings);
+    yaml = removeGroupsRules(yaml, groupTargets, ruleTargets);
 
-      // 4.2. 构建正则表达式来删除 `rules` 中的条目
-      // 匹配所有以 `,GroupName` 结尾的规则行 (包括可能的,no-resolve等后缀)
-      const ruleRegex = new RegExp(`\\n {2}-\\s*(')?.*,\\s*${groupName}.*`, 'g');
-      finalYaml = finalYaml.replace(ruleRegex, '');
-    });
-    
-    // 5. 显示最终的、保留了格式的 YAML 字符串
-    resultEl.textContent = finalYaml;
+    lastGeneratedYaml = yaml;
+    resultEl.textContent = yaml;
+    setSummary("生成成功：启用订阅 " + enabledCount + " 个，注入 use 目标 " + useCount + " 个，移除策略组目标 " + groupTargets.size + " 个，移除规则目标 " + ruleTargets.size + " 个。");
 
-    // 6. 处理下载
     if (download) {
-      const blob = new Blob([finalYaml], { type: "text/yaml" });
+      const blob = new Blob([yaml], { type: "text/yaml" });
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
-      a.download = "config.yaml";
+      a.download = normalizeFilename(settings.outputFilename, settings.appendTimestamp);
       a.click();
       URL.revokeObjectURL(a.href);
     }
-
   } catch (e) {
+    setSummary("生成失败：" + e.message);
+    resultEl.textContent = "生成失败，请检查输入后重试。";
     alert("生成失败：" + e.message);
-    console.error(e);
+  console.error(e);
   }
 }
 
-document.getElementById("btnGenerate").addEventListener("click", () => generate(true));
-document.getElementById("btnPreview").addEventListener("click", () => generate(false));
+async function copyResult() {
+  if (!lastGeneratedYaml) {
+    alert("请先预览或生成 YAML");
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(lastGeneratedYaml);
+    setSummary("已复制到剪贴板");
+  } catch {
+    alert("复制失败：浏览器可能未授予剪贴板权限");
+  }
+}
 
-// 输入框按 Enter 直接生成
-document.querySelectorAll("input").forEach(el => {
-  el.addEventListener("keydown", e => {
-    if (e.key === "Enter") generate(true);
+function syncLocalFields() {
+  const on = document.getElementById("includeLocalConfig").checked;
+  ["localConfigName", "localConfigPath", "localConfigPrefix"].forEach(id => {
+    document.getElementById(id).disabled = !on;
   });
-});
+}
+
+function parseBatchText(raw) {
+  return raw
+    .split(/\r?\n/)
+    .map(line => line.trim())
+    .filter(line => line && !line.startsWith("#") && !line.startsWith("//"))
+    .map((line, i) => {
+      const sep = line.includes("|") ? "|" : ",";
+      const parts = line.split(sep).map(v => v.trim()).filter(Boolean);
+      if (parts.length === 1) {
+        return newSub({ name: "订阅" + (idSeed + i + 1), url: parts[0], enabled: true });
+      }
+      return newSub({
+        name: parts[0] || ("订阅" + (idSeed + i + 1)),
+        url: parts[1] || "",
+        prefix: parts[2] || "",
+        enabled: true,
+      });
+    });
+}
+
+function bindEvents() {
+  document.getElementById("btnAddSub").addEventListener("click", () => {
+    syncSubs();
+    subscriptions.push(newSub({ name: "订阅" + (subscriptions.length + 1), enabled: true }));
+    renderSubs();
+  });
+
+  document.getElementById("btnClearSubs").addEventListener("click", () => {
+    syncSubs();
+    subscriptions = subscriptions.map(sub => ({ ...sub, url: "" }));
+    renderSubs();
+  });
+
+  document.getElementById("subsContainer").addEventListener("click", e => {
+    const btn = e.target.closest(".btn-remove-sub");
+    if (!btn) return;
+    syncSubs();
+    const row = btn.closest(".sub-row");
+    subscriptions = subscriptions.filter(sub => sub.id !== Number(row.dataset.id));
+    if (!subscriptions.length) subscriptions = [newSub({ name: "订阅一", enabled: true })];
+    renderSubs();
+  });
+
+  document.getElementById("btnImportBatch").addEventListener("click", () => {
+    const text = document.getElementById("batchInput").value.trim();
+    if (!text) return alert("请先填写批量订阅内容");
+    const parsed = parseBatchText(text);
+    if (!parsed.length) return alert("没有识别到有效订阅行");
+    syncSubs();
+    subscriptions = subscriptions.concat(parsed);
+    renderSubs();
+  });
+
+  document.getElementById("btnReplaceBatch").addEventListener("click", () => {
+    const text = document.getElementById("batchInput").value.trim();
+    if (!text) return alert("请先填写批量订阅内容");
+    const parsed = parseBatchText(text);
+    if (!parsed.length) return alert("没有识别到有效订阅行");
+    subscriptions = parsed;
+    renderSubs();
+  });
+
+  document.getElementById("btnGroupAll").addEventListener("click", () => {
+    document.querySelectorAll("#proxyGroupCheckboxes input[type='checkbox']").forEach(el => { el.checked = true; });
+  });
+
+  document.getElementById("btnGroupNone").addEventListener("click", () => {
+    document.querySelectorAll("#proxyGroupCheckboxes input[type='checkbox']").forEach(el => { el.checked = false; });
+  });
+
+  document.getElementById("btnGroupDefault").addEventListener("click", () => {
+    document.querySelectorAll("#proxyGroupCheckboxes input[type='checkbox']").forEach(el => {
+      el.checked = !!OPTIONAL_GROUP_MAP[el.value]?.checked;
+    });
+  });
+
+  document.getElementById("groupSearch").addEventListener("input", e => {
+    const kw = e.target.value.trim().toLowerCase();
+    document.querySelectorAll("#proxyGroupCheckboxes label").forEach(label => {
+      const hit = !kw || label.dataset.name.includes(kw);
+      label.classList.toggle("is-hidden", !hit);
+    });
+  });
+
+  document.getElementById("includeLocalConfig").addEventListener("change", syncLocalFields);
+
+  document.getElementById("btnGenerate").addEventListener("click", () => generate(true));
+  document.getElementById("btnPreview").addEventListener("click", () => generate(false));
+  document.getElementById("btnCopy").addEventListener("click", copyResult);
+}
+
+function init() {
+  document.getElementById("glFilter").value = DEFAULT_GL_FILTER;
+  document.getElementById("openaiFilter").value = DEFAULT_OPENAI_FILTER;
+  renderSubs();
+  renderGroups();
+  syncLocalFields();
+  bindEvents();
+}
+
+init();
 </script>
 
 </body>
 </html>
+
