@@ -1,5 +1,5 @@
 # mihomo (Clash Meta) 懒人配置
-# 版本 V0.4-20260401
+# 版本 V0.4-20260402
 # 仓库地址：https://github.com/eggylan/clash-config-convert
 # 感谢clash懒人配置（https://gist.github.com/liuran001/5ca84f7def53c70b554d3f765ff86a33）和原仓库（https://github.com/lzcmaro/clash-config-convert）的贡献
 
@@ -130,7 +130,26 @@ global-client-fingerprint: chrome
 profile:  
   store-selected: true  
   store-fake-ip: true  
-  
+
+# 自动同步时间以防止时间不准导致无法正常联网
+ntp:
+  enable: true
+  # 是否同步至系统时间，需要 root/管理员权限
+  write-to-system: false
+  server: time.apple.com
+  port: 123
+  interval: 30
+
+# 域名嗅探
+sniffer:
+  enable: true
+  sniff:
+    TLS:
+      ports: [443, 8443]
+    HTTP:
+      ports: [80, 8080-8880]
+      override-destination: true
+
 # tun 模式  
 tun:  
   enable: true  
@@ -148,11 +167,11 @@ dns:
   enable: true  
   ipv6: false  
   use-hosts: true  
-  use-system-hosts: true  
+  use-system-hosts: false
   # DOH 优先使用 http/3  
   prefer-h3: true  
   # DNS 请求是否进入路由/规则链  
-  respect-rules: false  
+  respect-rules: true 
   # 本地 DNS 监听端口，默认是 1053 端口  
   listen: 0.0.0.0:1053  
   # 可选缓存/TTL 设置，提高并发解析性能  
@@ -162,7 +181,7 @@ dns:
   
   direct-nameserver-follow-policy: false  
   
-  fake-ip-range: 198.18.0.0/16  
+  fake-ip-range: 28.0.0.1/8
   fake-ip-filter-mode: blacklist  
   fake-ip-filter:  
     - 'geosite:connectivity-check'
@@ -218,26 +237,29 @@ dns:
   # 国际doh均使用ip，防止反复解析dns的域名  
   nameserver-policy:  
     'geosite:cn':  # 国内网站优先国内 DNS  
-      - 'https://223.5.5.5/dns-query#DIRECT'  
-      - 'https://doh.360.cn/dns-query#DIRECT'  
-      - 'https://doh.pub/dns-query#DIRECT'  
+      - 'https://223.5.5.5/dns-query#China'  
+      - 'https://doh.360.cn/dns-query#China'  
+      - 'https://doh.pub/dns-query#China'  
     'private':  
-      - 'https://223.5.5.5/dns-query#DIRECT'  
-      - 'https://doh.360.cn/dns-query#DIRECT'  
-      - 'https://doh.pub/dns-query#DIRECT'  
-    'geosite:gfw':  # 被墙网站走国际 DNS  
-      - 'tls://1.1.1.1#QUERY-DNS'
-      - 'tls://8.8.8.8#QUERY-DNS' 
+      - 'https://223.5.5.5/dns-query#China'  
+      - 'https://doh.360.cn/dns-query#China'  
+      - 'https://doh.pub/dns-query#China'  
     '+.facebook.com': 'tls://1.1.1.1#QUERY-DNS'  
     '+.youtube.com': 'tls://1.1.1.1#QUERY-DNS'  
     # Google / FCM / Telegram 相关请求强制走可信DNS  
-    "+.googleapis.com": 'tls://1.1.1.1#QUERY-DNS'  
-    "+.firebaseio.com": 'tls://1.1.1.1#QUERY-DNS'  
-    "+.googleusercontent.com": 'tls://1.1.1.1#QUERY-DNS'  
-    "+.gstatic.com": 'tls://1.1.1.1#QUERY-DNS'  
-    "+.google.com": 'tls://1.1.1.1#QUERY-DNS'  
+    "+.googleapis.com": 'tls://8.8.8.8#QUERY-DNS'  
+    "+.firebaseio.com": 'tls://8.8.8.8#QUERY-DNS'  
+    "+.googleusercontent.com": 'tls://8.8.8.8#QUERY-DNS'  
+    "+.gstatic.com": 'tls://8.8.8.8#QUERY-DNS'  
+    "+.google.com": 'tls://8.8.8.8#QUERY-DNS'  
     "+.telegram.org": 'tls://1.1.1.1#QUERY-DNS'
     "+.bing.com": 'tls://1.1.1.1#QUERY-DNS'
+    'geosite:gfw':  # 被墙网站走国际 DNS  
+      - 'tls://1.1.1.1#QUERY-DNS'
+      - 'tls://8.8.8.8#QUERY-DNS' 
+    "geosite:!cn,!private": # 非国内网站走国际 DNS
+      - "tls://8.8.8.8#QUERY-DNS"
+      - "tls://1.1.1.1#QUERY-DNS"
   
   # 用来解析代理服务器域名的 DNS 服务器  
   proxy-server-nameserver:  
@@ -288,7 +310,8 @@ proxy-groups:
       - 故障转移  
     <<: *use  
   
-  - name: QUERY-DNS  
+  - name: QUERY-DNS
+    icon: https://raw.githubusercontent.com/NB921/picture/refs/heads/main/dns_optimizer.png
     exclude-filter: *GL  
     proxies:  
       - Proxies  
@@ -351,7 +374,7 @@ proxy-groups:
       - Proxies  
     <<: *use
 
-  - name: Steam-GameDownload
+  - name: SteamCN
     exclude-filter: *GL
     proxies:
       - DIRECT
@@ -417,6 +440,14 @@ proxy-groups:
       - Proxies  
       - DIRECT  
     # Final组是用来兜底的，不需要注入订阅节点，默认指向 "Proxies" 组  
+
+  - name: China  
+    type: select  
+    icon: https://raw.githubusercontent.com/NB921/picture/refs/heads/main/China.png  
+    proxies:  
+      - DIRECT  
+      - Proxies  
+    # China组是用来处理国内流量的，不需要注入订阅节点，默认指向 "DIRECT" 组
   
   - name: 广告  
     type: select  
@@ -445,7 +476,13 @@ proxy-groups:
     url: 'https://www.gstatic.com/generate_204'  
     interval: 600  
   
-rules:  
+rules: 
+  # 若需禁用 QUIC 请取消注释 QUIC 两条规则
+  # 防止 YouTube 等使用 QUIC 导致速度不佳, 禁用 443 端口 UDP 流量（不包括国内）
+  # 注意：可能会导致部分网站无法正常工作，开启前请自行评估风险
+  # - AND,(AND,(DST-PORT,443),(NETWORK,UDP)),(NOT,((GEOSITE,cn))),REJECT
+  # - AND,(AND,(DST-PORT,443),(NETWORK,UDP)),(NOT,((GEOIP,CN))),REJECT 
+  
   # 电报 FCM 相关服务强制走代理  
   # --------------------------------------------------  
   - DOMAIN-SUFFIX,firebaseio.com,Google
@@ -456,13 +493,10 @@ rules:
   - 'DOMAIN-KEYWORD,mtalk,Google'
   # --------------------------------------------------  
   
-  # 私有IP  
-  - GEOIP,private,DIRECT,no-resolve  
-  
-  # 直连白名单  
-  - 'DOMAIN,dns.alidns.com,DIRECT'  
-  - 'DOMAIN,doh.pub,DIRECT'
-  - 'DOMAIN,doh.360.cn,DIRECT'  
+  # DNS直连白名单  
+  - 'DOMAIN,dns.alidns.com,China'  
+  - 'DOMAIN,doh.pub,China'
+  - 'DOMAIN,doh.360.cn,China'  
 
   # 广告拦截  
   - RULE-SET,秋风广告,广告  
@@ -490,9 +524,7 @@ rules:
   - GEOSITE,tiktok,TikTok  
   - GEOSITE,netflix,Netflix  
   - GEOSITE,disney,Disney
-  - 'DOMAIN,steamcdn-a.akamaihd.net,Steam-GameDownload'  
-  - 'DOMAIN-SUFFIX,steamserver.net,Steam-GameDownload'
-  - 'DOMAIN-SUFFIX,steamcontent.com,Steam-GameDownload'
+  - GEOSITE,steam@cn,SteamCN
   - GEOSITE,steam,Steam
   - GEOSITE,paypal,PayPal  
   - GEOSITE,openai,OpenAI  
@@ -507,8 +539,15 @@ rules:
   - GEOSITE,gfw,Proxies  
   # 本地和国内域名  
   - DOMAIN-SUFFIX,local,DIRECT  
-  - DOMAIN-SUFFIX,cn,DIRECT
-  - GEOSITE,cn,DIRECT  
-  - GEOIP,CN,DIRECT  
+  - DOMAIN-SUFFIX,cn,China
+  - GEOSITE,CN,China
+  - GEOIP,CN,China 
+  # 绕过局域网地址和私有ip
+  - GEOIP,private,DIRECT,no-resolve  
+  - IP-CIDR,10.0.0.0/8,DIRECT,no-resolve
+  - IP-CIDR,172.16.0.0/12,DIRECT,no-resolve
+  - IP-CIDR,192.168.0.0/16,DIRECT,no-resolve
+  - IP-CIDR,100.64.0.0/10,DIRECT,no-resolve
+  - IP-CIDR,127.0.0.0/8,DIRECT,no-resolve
   # 漏网之鱼
   - MATCH,Final
