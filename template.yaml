@@ -85,7 +85,7 @@ rule-providers:
   
 mode: rule  
 # ipv6 支持  
-ipv6: true  
+ipv6: false 
 log-level: info  
 # 允许局域网连接  
 allow-lan: true  
@@ -96,8 +96,8 @@ mixed-port: 7890
 # 更换延迟计算方式,去除握手等额外延迟  
 unified-delay: true  
 # TCP 并发  
-# 同时对所有ip进行连接，返回延迟最低的地址  
-tcp-concurrent: true  
+# 同时对所有ip进行连接，返回延迟最低的地址，但有被误判为攻击的风险
+tcp-concurrent: false
 # 外部控制端口  
 external-controller: :9090  
   
@@ -169,7 +169,7 @@ dns:
   use-hosts: true  
   use-system-hosts: false
   # DOH 优先使用 http/3  
-  prefer-h3: true  
+  prefer-h3: false  
   # DNS 请求是否进入路由/规则链  
   respect-rules: true 
   # 本地 DNS 监听端口，默认是 1053 端口  
@@ -210,56 +210,34 @@ dns:
     - '223.5.5.5'  
     - '218.201.96.130'  
     - '119.29.29.29'  
-    - '180.184.1.1'  
+    - '180.184.1.1'
+    - '[2402:4e00::]'
+    - '[2400:3200::1]'  
   
   nameserver:  
     - 'tls://1.1.1.1#QUERY-DNS'  
     - 'tls://8.8.8.8#QUERY-DNS' # 强制走 DNS Over Proxy ，这里采用一个比较激进的策略，默认就用国外的dns解析，遇到国内网站会优先匹配到后面的geosite
-    - 'tls://223.5.5.5#QUERY-DNS'  # 阿里云是有国际服务器的，对dns解析影响不大
-    
-  fallback:  
-    - 'tls://1.1.1.1#QUERY-DNS'  # fallback也走代理，防止请求失败回到国内dns
-    - 'tls://8.8.8.8#QUERY-DNS' 
-    - 'tls://223.5.5.5#QUERY-DNS'  
-  
-  fallback-filter:  
-    geoip: true  
-    geoip-code: 'CN'  
-    ipcidr:  
-      - '240.0.0.0/4'  
-      - '0.0.0.0/32'  
-    domain:  
-      - '+.google.com'  
-      - '+.facebook.com'  
-      - '+.youtube.com'  
-  
+    - 'tls://223.5.5.5#QUERY-DNS'  # 阿里云是有国际服务器的，对dns解析影响不大，同时解决订阅无法下载的问题
+    - 'tls://[2001:4860:4860::8844]#QUERY-DNS'
+    - 'tls://[2606:4700:4700::1001]#QUERY-DNS'
+      
   # 特殊域名走专用解析策略  
   # 国际doh均使用ip，防止反复解析dns的域名  
   nameserver-policy:  
-    'geosite:cn':  # 国内网站优先国内 DNS  
+    'geosite:cn,private':  # 国内网站优先国内 DNS  
       - 'https://223.5.5.5/dns-query#China'  
       - 'https://doh.360.cn/dns-query#China'  
       - 'https://doh.pub/dns-query#China'  
-    'private':  
-      - 'https://223.5.5.5/dns-query#China'  
-      - 'https://doh.360.cn/dns-query#China'  
-      - 'https://doh.pub/dns-query#China'  
-    '+.facebook.com': 'tls://1.1.1.1#QUERY-DNS'  
-    '+.youtube.com': 'tls://1.1.1.1#QUERY-DNS'  
-    # Google / FCM / Telegram 相关请求强制走可信DNS  
-    "+.googleapis.com": 'tls://8.8.8.8#QUERY-DNS'  
-    "+.firebaseio.com": 'tls://8.8.8.8#QUERY-DNS'  
-    "+.googleusercontent.com": 'tls://8.8.8.8#QUERY-DNS'  
-    "+.gstatic.com": 'tls://8.8.8.8#QUERY-DNS'  
-    "+.google.com": 'tls://8.8.8.8#QUERY-DNS'  
-    "+.telegram.org": 'tls://1.1.1.1#QUERY-DNS'
-    "+.bing.com": 'tls://1.1.1.1#QUERY-DNS'
     'geosite:gfw':  # 被墙网站走国际 DNS  
       - 'tls://1.1.1.1#QUERY-DNS'
-      - 'tls://8.8.8.8#QUERY-DNS' 
+      - 'tls://8.8.8.8#QUERY-DNS'
+      - 'tls://[2001:4860:4860::8844]#QUERY-DNS'
+      - 'tls://[2606:4700:4700::1001]#QUERY-DNS'   
     "geosite:!cn,!private": # 非国内网站走国际 DNS
       - "tls://8.8.8.8#QUERY-DNS"
       - "tls://1.1.1.1#QUERY-DNS"
+      - 'tls://[2001:4860:4860::8844]#QUERY-DNS'
+      - 'tls://[2606:4700:4700::1001]#QUERY-DNS'  
   
   # 用来解析代理服务器域名的 DNS 服务器  
   proxy-server-nameserver:  
@@ -482,8 +460,16 @@ rules:
   # 注意：可能会导致部分网站无法正常工作，开启前请自行评估风险
   # - AND,(AND,(DST-PORT,443),(NETWORK,UDP)),(NOT,((GEOSITE,cn))),REJECT
   # - AND,(AND,(DST-PORT,443),(NETWORK,UDP)),(NOT,((GEOIP,CN))),REJECT 
-  
-  # 电报 FCM 相关服务强制走代理  
+
+  # 绕过局域网地址和私有ip
+  - GEOIP,private,DIRECT,no-resolve  
+  - IP-CIDR,10.0.0.0/8,DIRECT,no-resolve
+  - IP-CIDR,172.16.0.0/12,DIRECT,no-resolve
+  - IP-CIDR,192.168.0.0/16,DIRECT,no-resolve
+  - IP-CIDR,100.64.0.0/10,DIRECT,no-resolve
+  - IP-CIDR,127.0.0.0/8,DIRECT,no-resolve
+
+  # FCM 相关服务强制走代理  
   # --------------------------------------------------  
   - DOMAIN-SUFFIX,firebaseio.com,Google
   - DOMAIN-SUFFIX,googleapis.com,Google
@@ -542,12 +528,5 @@ rules:
   - DOMAIN-SUFFIX,cn,China
   - GEOSITE,CN,China
   - GEOIP,CN,China 
-  # 绕过局域网地址和私有ip
-  - GEOIP,private,DIRECT,no-resolve  
-  - IP-CIDR,10.0.0.0/8,DIRECT,no-resolve
-  - IP-CIDR,172.16.0.0/12,DIRECT,no-resolve
-  - IP-CIDR,192.168.0.0/16,DIRECT,no-resolve
-  - IP-CIDR,100.64.0.0/10,DIRECT,no-resolve
-  - IP-CIDR,127.0.0.0/8,DIRECT,no-resolve
   # 漏网之鱼
   - MATCH,Final

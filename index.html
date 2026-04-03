@@ -419,6 +419,31 @@ https://c.com/sub"></textarea>
         </div>
 
         <div class="field">
+          <label>IPv6 支持</label>
+          <label class="inline-check"><input id="ipv6" type="checkbox"/> 开启全局与 DNS IPv6 解析</label>
+        </div>
+
+        <div class="field">
+          <label>TCP 并发 (tcp-concurrent)</label>
+          <label class="inline-check"><input id="tcpConcurrent" type="checkbox"/> 开启</label>
+        </div>
+
+        <div class="field">
+          <label>DNS HTTP/3 (prefer-h3)</label>
+          <label class="inline-check"><input id="preferH3" type="checkbox"/> 开启</label>
+        </div>
+
+        <div class="field">
+          <label>禁用 QUIC 协议</label>
+          <label class="inline-check"><input id="disableQuic" type="checkbox"/> 拦截国外 443 UDP 流量</label>
+        </div>
+
+        <div class="field">
+          <label for="keepAliveInterval">TCP 保活时间 (秒)</label>
+          <input id="keepAliveInterval" type="number" min="0" step="30" value="1800"/>
+        </div>
+
+        <div class="field">
           <label>本地配置注入</label>
           <label class="inline-check"><input id="includeLocalConfig" type="checkbox"/> 将本地配置加入 use 与 proxy-providers</label>
         </div>
@@ -708,6 +733,11 @@ function readSettings() {
     healthCheckInterval: parseIntSafe(document.getElementById("healthCheckInterval").value, 1800, 60, 86400),
     healthCheckTimeout: parseIntSafe(document.getElementById("healthCheckTimeout").value, 2000, 100, 20000),
     healthCheckTolerance: parseIntSafe(document.getElementById("healthCheckTolerance").value, 300, 0, 20000),
+    ipv6: document.getElementById("ipv6").checked,
+    tcpConcurrent: document.getElementById("tcpConcurrent").checked,
+    preferH3: document.getElementById("preferH3").checked,
+    disableQuic: document.getElementById("disableQuic").checked,
+    keepAliveInterval: parseIntSafe(document.getElementById("keepAliveInterval").value, 1800, 0, 86400),
     glFilter: document.getElementById("glFilter").value.trim() || DEFAULT_GL_FILTER,
     openaiFilter: document.getElementById("openaiFilter").value.trim() || DEFAULT_OPENAI_FILTER,
     includeLocalConfig: document.getElementById("includeLocalConfig").checked,
@@ -777,6 +807,29 @@ function applySettings(template, settings, mergedBlock) {
   out = replaceBlock(out, /use:\s*&use[\s\S]*?(?=\n# 小白请不要继续随意修改以下设置)/, mergedBlock + "\n", "use/proxy-providers");
   out = replaceBlock(out, /^过滤节点:\s*&GL\s*".*"\s*$/m, "过滤节点: &GL \"" + escapeYamlDoubleQuoted(settings.glFilter) + "\"", "过滤节点");
   out = replaceBlock(out, /^openai:\s*&OPENAI\s*".*"\s*$/m, "openai: &OPENAI \"" + escapeYamlDoubleQuoted(settings.openaiFilter) + "\"", "openai");
+
+  if (settings.ipv6) {
+    out = out.replace(/^ipv6:\s*false\s*$/m, "ipv6: true");
+    out = out.replace(/^  ipv6:\s*false\s*$/m, "  ipv6: true");
+  } else {
+    out = out.replace(/\n\s*-\s*'?(?:tls:\/\/|https:\/\/)?\[[0-9a-fA-F:]+\][^'\n]*'?/g, "");
+  }
+
+  if (settings.tcpConcurrent) {
+    out = out.replace(/^tcp-concurrent:\s*false\s*$/m, "tcp-concurrent: true");
+  }
+
+  if (settings.preferH3) {
+    out = out.replace(/^  prefer-h3:\s*false\s*$/m, "  prefer-h3: true");
+  }
+
+  if (settings.disableQuic) {
+    out = out.replace(/^ *# - AND,\(AND,\(DST-PORT,443\),\(NETWORK,UDP\)\),\(NOT,\(\(GEOSITE,cn\)\)\),REJECT\s*/m, "  - AND,(AND,(DST-PORT,443),(NETWORK,UDP)),(NOT,((GEOSITE,cn))),REJECT\n");
+    out = out.replace(/^ *# - AND,\(AND,\(DST-PORT,443\),\(NETWORK,UDP\)\),\(NOT,\(\(GEOIP,CN\)\)\),REJECT\s*/m, "  - AND,(AND,(DST-PORT,443),(NETWORK,UDP)),(NOT,((GEOIP,CN))),REJECT\n");
+  }
+
+  out = out.replace(/^keep-alive-interval:\s*\d+\s*$/m, "keep-alive-interval: " + settings.keepAliveInterval);
+
   return out;
 }
 
