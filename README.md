@@ -44,3 +44,7 @@ HTTP server is running at http://localhost:7799/
 - 本项目为 [lzcmaro/clash-config-convert](https://github.com/lzcmaro/clash-config-convert) 的二次开发改进版本。
 - 感谢 clash 懒人配置：[liuran001](https://gist.github.com/liuran001/5ca84f7def53c70b554d3f765ff86a33)。
 
+## 友情链接
+
+- [LINUX DO - 新的理想型社区](https://linux.do/)
+
