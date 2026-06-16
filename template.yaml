@@ -171,7 +171,7 @@ dns:
   # DOH 优先使用 http/3  
   prefer-h3: false  
   # DNS 请求是否进入路由/规则链  
-  respect-rules: true 
+  respect-rules: false
   # 本地 DNS 监听端口，默认是 1053 端口  
   listen: 0.0.0.0:1053  
   # 可选缓存/TTL 设置，提高并发解析性能  
@@ -181,7 +181,7 @@ dns:
   
   direct-nameserver-follow-policy: false  
   
-  fake-ip-range: 28.0.0.1/8
+  fake-ip-range: 198.18.0.1/16
   fake-ip-filter-mode: blacklist  
   fake-ip-filter:  
     - 'geosite:connectivity-check'
