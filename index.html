@@ -407,6 +407,7 @@ https://c.com/sub"></textarea>
         <div class="field">
           <label for="providerInterval">订阅更新间隔（秒）</label>
           <input id="providerInterval" type="number" min="60" step="60" value="86400"/>
+          <label class="inline-check"><input id="providerAutoUpdate" type="checkbox" checked/> 自动更新订阅（关闭后仅首次下载）</label>
         </div>
 
         <div class="field">
@@ -700,11 +701,13 @@ function dedupeNames(enabledSubs) {
 }
 
 function buildProviderAnchor(settings) {
+  const updateLines = settings.providerAutoUpdate
+    ? ["  # 自动更新订阅时间，单位为秒", "  interval: " + settings.providerInterval]
+    : ["  # 已关闭自动更新：interval 为 0 时只在首次使用时下载，之后不再定时刷新", "  interval: 0"];
   const lines = [
     "p: &p",
     "  type: http",
-    "  # 自动更新订阅时间，单位为秒",
-    "  interval: " + settings.providerInterval,
+    ...updateLines,
     "  # 订阅节点可用性检查",
     "  health-check:",
     "    enable: " + (settings.healthCheckEnabled ? "true" : "false"),
@@ -816,6 +819,7 @@ function readSettings() {
     outputFilename: document.getElementById("outputFilename").value.trim(),
     appendTimestamp: document.getElementById("appendTimestamp").checked,
     providerInterval: parseIntSafe(document.getElementById("providerInterval").value, 86400, 60, 604800),
+    providerAutoUpdate: document.getElementById("providerAutoUpdate").checked,
     healthCheckEnabled: document.getElementById("healthCheckEnabled").checked,
     healthCheckUrl: document.getElementById("healthCheckUrl").value.trim() || "https://cp.cloudflare.com",
     healthCheckInterval: parseIntSafe(document.getElementById("healthCheckInterval").value, 1800, 60, 86400),
@@ -951,7 +955,7 @@ async function generate(download) {
 
     lastGeneratedYaml = yaml;
     resultEl.textContent = yaml;
-    setSummary("生成成功：启用订阅 " + enabledCount + " 个，注入 use 目标 " + useCount + " 个，移除策略组目标 " + groupTargets.size + " 个，移除规则目标 " + ruleTargets.size + " 个；TUN 栈 " + settings.tunStack + "，DNS 模式 " + settings.dnsMode + "，客户端指纹 " + (settings.clientFingerprint || "不修改") + "，健康检查 " + (settings.healthCheckEnabled ? "开启" : "关闭") + "。");
+    setSummary("生成成功：启用订阅 " + enabledCount + " 个，注入 use 目标 " + useCount + " 个，移除策略组目标 " + groupTargets.size + " 个，移除规则目标 " + ruleTargets.size + " 个；TUN 栈 " + settings.tunStack + "，DNS 模式 " + settings.dnsMode + "，订阅更新 " + (settings.providerAutoUpdate ? settings.providerInterval + " 秒" : "关闭") + "，客户端指纹 " + (settings.clientFingerprint || "不修改") + "，健康检查 " + (settings.healthCheckEnabled ? "开启" : "关闭") + "。");
 
     if (download) {
       const blob = new Blob([yaml], { type: "text/yaml" });
@@ -994,6 +998,10 @@ function syncHealthFields() {
   ["healthCheckUrl", "healthCheckInterval", "healthCheckTimeout", "healthCheckTolerance"].forEach(id => {
     document.getElementById(id).disabled = !on;
   });
+}
+
+function syncProviderFields() {
+  document.getElementById("providerInterval").disabled = !document.getElementById("providerAutoUpdate").checked;
 }
 
 function parseBatchText(raw) {
@@ -1082,6 +1090,7 @@ function bindEvents() {
 
   document.getElementById("includeLocalConfig").addEventListener("change", syncLocalFields);
   document.getElementById("healthCheckEnabled").addEventListener("change", syncHealthFields);
+  document.getElementById("providerAutoUpdate").addEventListener("change", syncProviderFields);
 
   document.getElementById("btnGenerate").addEventListener("click", () => generate(true));
   document.getElementById("btnPreview").addEventListener("click", () => generate(false));
@@ -1095,6 +1104,7 @@ function init() {
   renderGroups();
   syncLocalFields();
   syncHealthFields();
+  syncProviderFields();
   bindEvents();
 }
 
