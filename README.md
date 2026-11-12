@@ -11,6 +11,7 @@
 - **高级参数调整**：支持自定义订阅更新间隔、测速间隔等高级参数，可修改输出配置文件名。
 - **TUN 栈与 DNS 模式可选**：TUN 栈支持 mips、mixed、gvisor、system（默认 mips），DNS 增强模式支持 fake-ip、redir-host（默认 fake-ip）。订阅健康检查可整体关闭，关闭后 provider 不再自动测速。
 - **控制端口默认只监听本机**：生成的配置里 `external-controller` 是 `127.0.0.1:9090`。需要在手机上打开面板时改成 `:9090`，同时设置 `secret`，否则同一局域网的其他设备可以改配置。
+- **客户端指纹可覆盖**：可选 chrome / firefox / safari / ios / android / edge / 360 / qq / random，通过每个 provider 的 `override-expr` 注入。仅对 vmess / vless / trojan / anytls 生效，`none` 用于清除节点自带的指纹。
 - **保护隐私**：纯前端实现，所有的处理过程都在本地浏览器即可完成，可以直接使用下载生成的配置文件，不用担心订阅链接被上传或泄露。
 - **开箱即用**：自带基于 [clash-config-convert](https://github.com/lzcmaro/clash-config-convert) 和 `liuran001` 的优化模板。
 

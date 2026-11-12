@@ -478,6 +478,23 @@ https://c.com/sub"></textarea>
         </div>
 
         <div class="field">
+          <label for="clientFingerprint">客户端指纹 (client-fingerprint)</label>
+          <select id="clientFingerprint" title="通过每个 provider 的 override-expr 注入，仅对 vmess / vless / trojan / anytls 生效">
+            <option value="" selected>不修改（保持节点自带值）</option>
+            <option value="chrome">chrome</option>
+            <option value="firefox">firefox</option>
+            <option value="safari">safari</option>
+            <option value="ios">ios</option>
+            <option value="android">android</option>
+            <option value="edge">edge</option>
+            <option value="360">360</option>
+            <option value="qq">qq</option>
+            <option value="random">random</option>
+            <option value="none">none（清除指纹）</option>
+          </select>
+        </div>
+
+        <div class="field">
           <label>本地配置注入</label>
           <label class="inline-check"><input id="includeLocalConfig" type="checkbox"/> 将本地配置加入 use 与 proxy-providers</label>
         </div>
@@ -536,6 +553,9 @@ const TEMPLATE_FILE = "template.yaml";
 // 与 mihomo 的 constant.StackTypeMapping / constant.DNSModeMapping 保持一致
 const TUN_STACK_OPTIONS = ["mips", "mixed", "gvisor", "system"];
 const DNS_MODE_OPTIONS = ["fake-ip", "redir-host"];
+
+// 与 mihomo 的 component/tls/utls.go fingerprints 表保持一致
+const CLIENT_FINGERPRINT_OPTIONS = ["", "none", "chrome", "firefox", "safari", "ios", "android", "edge", "360", "qq", "random"];
 
 const DEFAULT_GL_FILTER = "跳转|长期|导入|节点|流量|轮询|群|邀请|返利|循环|官网|客服|网站|网址|获取|订阅|失联|到期|JC|下次|版本|官址|备用|过期|已用|联系|邮箱|工单|贩卖|通知|倒卖|防止|国内|地址|频道|无法|说明|使用|页面|提示|特别|访问|支持|教程|关注|更新|作者|加入|.com|USE|USED|TOTAL|EXPIRE|EMAIL|Panel|Channel|Author";
 const DEFAULT_OPENAI_FILTER = "香港|🇭🇰|HK|Hong|跳转|长期|导入|节点|流量|轮询|群|邀请|返利|循环|官网|客服|网站|网址|获取|订阅|失联|到期|JC|下次|版本|官址|备用|过期|已用|联系|邮箱|工单|贩卖|通知|倒卖|防止|国内|地址|频道|无法|说明|使用|页面|提示|特别|访问|支持|教程|关注|更新|作者|加入|.com|USE|USED|TOTAL|EXPIRE|EMAIL|Panel|Channel|Author";
@@ -719,6 +739,20 @@ function replaceNestedValue(content, parentKey, childKey, value, blockName) {
   return replaceBlock(content, pattern, (matched, head) => head + value, blockName);
 }
 
+function buildOverrideLines(prefix, settings) {
+  const lines = [];
+  if (prefix) {
+    lines.push("additional-prefix: \"" + escapeYamlDoubleQuoted(prefix) + "\"");
+  }
+  const fingerprint = CLIENT_FINGERPRINT_OPTIONS.includes(settings.clientFingerprint) ? settings.clientFingerprint : "";
+  if (fingerprint) {
+    // mihomo 已移除 global-client-fingerprint，只能在 provider 上用 override-expr 逐节点改写
+    lines.push("override-expr:");
+    lines.push("  - '.client-fingerprint = \"" + escapeYamlDoubleQuoted(fingerprint) + "\"'");
+  }
+  return lines;
+}
+
 function buildUseProvidersBlock(subs, settings) {
   const enabledSubs = dedupeNames(subs.filter(s => s.enabled));
   if (!enabledSubs.length) throw new Error("至少需要启用一个订阅");
@@ -750,9 +784,10 @@ function buildUseProvidersBlock(subs, settings) {
     lines.push("  \"" + escapeYamlDoubleQuoted(sub.name) + "\":");
     lines.push("    <<: *p");
     lines.push("    url: \"" + escapeYamlDoubleQuoted(sub.url) + "\"");
-    if (sub.prefix) {
+    const overrides = buildOverrideLines(sub.prefix, settings);
+    if (overrides.length) {
       lines.push("    override:");
-      lines.push("      additional-prefix: \"" + escapeYamlDoubleQuoted(sub.prefix) + "\"");
+      overrides.forEach(line => lines.push("      " + line));
     }
     lines.push("");
   });
@@ -761,9 +796,10 @@ function buildUseProvidersBlock(subs, settings) {
     lines.push("  \"" + escapeYamlDoubleQuoted(settings.localConfigName) + "\":");
     lines.push("    <<: *p");
     lines.push("    path: \"" + escapeYamlDoubleQuoted(settings.localConfigPath) + "\"");
-    if (settings.localConfigPrefix) {
+    const localOverrides = buildOverrideLines(settings.localConfigPrefix, settings);
+    if (localOverrides.length) {
       lines.push("    override:");
-      lines.push("      additional-prefix: \"" + escapeYamlDoubleQuoted(settings.localConfigPrefix) + "\"");
+      localOverrides.forEach(line => lines.push("      " + line));
     }
     lines.push("");
   }
@@ -792,6 +828,9 @@ function readSettings() {
     keepAliveInterval: parseIntSafe(document.getElementById("keepAliveInterval").value, 1800, 0, 86400),
     tunStack: document.getElementById("tunStack").value,
     dnsMode: document.getElementById("dnsMode").value,
+    clientFingerprint: CLIENT_FINGERPRINT_OPTIONS.includes(document.getElementById("clientFingerprint").value)
+      ? document.getElementById("clientFingerprint").value
+      : "",
     glFilter: document.getElementById("glFilter").value.trim() || DEFAULT_GL_FILTER,
     openaiFilter: document.getElementById("openaiFilter").value.trim() || DEFAULT_OPENAI_FILTER,
     includeLocalConfig: document.getElementById("includeLocalConfig").checked,
@@ -912,7 +951,7 @@ async function generate(download) {
 
     lastGeneratedYaml = yaml;
     resultEl.textContent = yaml;
-    setSummary("生成成功：启用订阅 " + enabledCount + " 个，注入 use 目标 " + useCount + " 个，移除策略组目标 " + groupTargets.size + " 个，移除规则目标 " + ruleTargets.size + " 个；TUN 栈 " + settings.tunStack + "，DNS 模式 " + settings.dnsMode + "，健康检查 " + (settings.healthCheckEnabled ? "开启" : "关闭") + "。");
+    setSummary("生成成功：启用订阅 " + enabledCount + " 个，注入 use 目标 " + useCount + " 个，移除策略组目标 " + groupTargets.size + " 个，移除规则目标 " + ruleTargets.size + " 个；TUN 栈 " + settings.tunStack + "，DNS 模式 " + settings.dnsMode + "，客户端指纹 " + (settings.clientFingerprint || "不修改") + "，健康检查 " + (settings.healthCheckEnabled ? "开启" : "关闭") + "。");
 
     if (download) {
       const blob = new Blob([yaml], { type: "text/yaml" });
