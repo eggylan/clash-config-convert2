@@ -174,6 +174,7 @@
   input[type="text"],
   input[type="url"],
   input[type="number"],
+  select,
   textarea {
     width: 100%;
     border: 1px solid #ccd8ed;
@@ -187,6 +188,7 @@
   }
 
   input:focus,
+  select:focus,
   textarea:focus {
     border-color: #79a1df;
     box-shadow: 0 0 0 4px rgba(121, 161, 223, 0.2);
@@ -444,6 +446,24 @@ https://c.com/sub"></textarea>
         </div>
 
         <div class="field">
+          <label for="tunStack">TUN 栈 (tun.stack)</label>
+          <select id="tunStack">
+            <option value="mips" selected>mips</option>
+            <option value="mixed">mixed</option>
+            <option value="gvisor">gvisor</option>
+            <option value="system">system</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="dnsMode">DNS 模式 (enhanced-mode)</label>
+          <select id="dnsMode">
+            <option value="fake-ip" selected>fake-ip</option>
+            <option value="redir-host">redir-host</option>
+          </select>
+        </div>
+
+        <div class="field">
           <label>本地配置注入</label>
           <label class="inline-check"><input id="includeLocalConfig" type="checkbox"/> 将本地配置加入 use 与 proxy-providers</label>
         </div>
@@ -499,31 +519,34 @@ https://c.com/sub"></textarea>
 
 <script>
 const TEMPLATE_FILE = "template.yaml";
+// 与 mihomo 的 constant.StackTypeMapping / constant.DNSModeMapping 保持一致
+const TUN_STACK_OPTIONS = ["mips", "mixed", "gvisor", "system"];
+const DNS_MODE_OPTIONS = ["fake-ip", "redir-host"];
 
 const DEFAULT_GL_FILTER = "跳转|长期|导入|节点|流量|轮询|群|邀请|返利|循环|官网|客服|网站|网址|获取|订阅|失联|到期|JC|下次|版本|官址|备用|过期|已用|联系|邮箱|工单|贩卖|通知|倒卖|防止|国内|地址|频道|无法|说明|使用|页面|提示|特别|访问|支持|教程|关注|更新|作者|加入|.com|USE|USED|TOTAL|EXPIRE|EMAIL|Panel|Channel|Author";
 const DEFAULT_OPENAI_FILTER = "香港|🇭🇰|HK|Hong|跳转|长期|导入|节点|流量|轮询|群|邀请|返利|循环|官网|客服|网站|网址|获取|订阅|失联|到期|JC|下次|版本|官址|备用|过期|已用|联系|邮箱|工单|贩卖|通知|倒卖|防止|国内|地址|频道|无法|说明|使用|页面|提示|特别|访问|支持|教程|关注|更新|作者|加入|.com|USE|USED|TOTAL|EXPIRE|EMAIL|Panel|Channel|Author";
 
 const OPTIONAL_GROUPS = [
   { name: "YouTube", checked: true },
-  { name: "Twitter", checked: false },
-  { name: "Facebook", checked: false },
+  { name: "Twitter", checked: true },
+  { name: "Facebook", checked: true },
   { name: "Telegram", checked: true },
   { name: "TikTok", checked: true },
-  { name: "Netflix", checked: false },
-  { name: "Disney", checked: false },
+  { name: "Netflix", checked: true },
+  { name: "Disney", checked: true },
   {
     name: "Steam",
-    checked: false,
+    checked: true,
     groupTargets: ["Steam", "SteamCN"],
     ruleTargets: ["Steam", "SteamCN"],
   },
-  { name: "PayPal", checked: false },
+  { name: "PayPal", checked: true },
   { name: "OpenAI", checked: true },
-  { name: "Github", checked: false },
+  { name: "Github", checked: true },
   { name: "Google", checked: true },
   { name: "Microsoft", checked: true },
-  { name: "Apple", checked: false },
-  { name: "Binance", checked: false },
+  { name: "Apple", checked: true },
+  { name: "Binance", checked: true },
 ];
 
 const OPTIONAL_GROUP_MAP = OPTIONAL_GROUPS.reduce((acc, item) => {
@@ -663,9 +686,18 @@ function buildProviderAnchor(settings) {
 }
 
 function replaceBlock(content, regex, replacement, blockName) {
-  const out = content.replace(regex, replacement);
-  if (out === content) throw new Error("模板中未找到 " + blockName + " 区块");
-  return out;
+  // 用匹配结果判断区块是否存在：替换成相同内容时也算命中
+  if (!regex.test(content)) throw new Error("模板中未找到 " + blockName + " 区块");
+  return content.replace(regex, replacement);
+}
+
+// 只在指定父级（顶格键）内部替换子键的值，避免误改其他同名键
+function replaceNestedValue(content, parentKey, childKey, value, blockName) {
+  const pattern = new RegExp(
+    "(^" + parentKey + ":[^\\n]*\\n(?:[ \\t]+[^\\n]*\\n)*?[ \\t]+" + childKey + ":[ \\t]*)\\S+",
+    "m"
+  );
+  return replaceBlock(content, pattern, (matched, head) => head + value, blockName);
 }
 
 function buildUseProvidersBlock(subs, settings) {
@@ -738,6 +770,8 @@ function readSettings() {
     preferH3: document.getElementById("preferH3").checked,
     disableQuic: document.getElementById("disableQuic").checked,
     keepAliveInterval: parseIntSafe(document.getElementById("keepAliveInterval").value, 1800, 0, 86400),
+    tunStack: document.getElementById("tunStack").value,
+    dnsMode: document.getElementById("dnsMode").value,
     glFilter: document.getElementById("glFilter").value.trim() || DEFAULT_GL_FILTER,
     openaiFilter: document.getElementById("openaiFilter").value.trim() || DEFAULT_OPENAI_FILTER,
     includeLocalConfig: document.getElementById("includeLocalConfig").checked,
@@ -808,6 +842,12 @@ function applySettings(template, settings, mergedBlock) {
   out = replaceBlock(out, /^过滤节点:\s*&GL\s*".*"\s*$/m, "过滤节点: &GL \"" + escapeYamlDoubleQuoted(settings.glFilter) + "\"", "过滤节点");
   out = replaceBlock(out, /^openai:\s*&OPENAI\s*".*"\s*$/m, "openai: &OPENAI \"" + escapeYamlDoubleQuoted(settings.openaiFilter) + "\"", "openai");
 
+  const tunStack = TUN_STACK_OPTIONS.includes(settings.tunStack) ? settings.tunStack : "mips";
+  out = replaceNestedValue(out, "tun", "stack", tunStack, "tun.stack");
+
+  const dnsMode = DNS_MODE_OPTIONS.includes(settings.dnsMode) ? settings.dnsMode : "fake-ip";
+  out = replaceNestedValue(out, "dns", "enhanced-mode", dnsMode, "dns.enhanced-mode");
+
   if (settings.ipv6) {
     out = out.replace(/^ipv6:\s*false\s*$/m, "ipv6: true");
     out = out.replace(/^  ipv6:\s*false\s*$/m, "  ipv6: true");
@@ -852,7 +892,7 @@ async function generate(download) {
 
     lastGeneratedYaml = yaml;
     resultEl.textContent = yaml;
-    setSummary("生成成功：启用订阅 " + enabledCount + " 个，注入 use 目标 " + useCount + " 个，移除策略组目标 " + groupTargets.size + " 个，移除规则目标 " + ruleTargets.size + " 个。");
+    setSummary("生成成功：启用订阅 " + enabledCount + " 个，注入 use 目标 " + useCount + " 个，移除策略组目标 " + groupTargets.size + " 个，移除规则目标 " + ruleTargets.size + " 个；TUN 栈 " + settings.tunStack + "，DNS 模式 " + settings.dnsMode + "。");
 
     if (download) {
       const blob = new Blob([yaml], { type: "text/yaml" });

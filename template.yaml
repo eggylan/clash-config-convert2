@@ -153,7 +153,7 @@ sniffer:
 # tun 模式  
 tun:  
   enable: true  
-  stack: mixed  
+  stack: mips
   endpoint-independent-nat: true  
   dns-hijack:  
     - "any:53"  
@@ -283,7 +283,8 @@ proxy-groups:
   - name: Proxies
     exclude-filter: *GL  
     icon: https://raw.githubusercontent.com/NB921/picture/refs/heads/main/clasha.png  
-    proxies:  
+    proxies:
+      - DIRECT  
       - 自动选择  
       - 故障转移  
     <<: *use  
@@ -389,11 +390,10 @@ proxy-groups:
   
   - name: Microsoft  
     icon: https://raw.githubusercontent.com/NB921/picture/refs/heads/main/microsoft.png  
-    exclude-filter: *GL  
     proxies:  
-      - Proxies  
       - DIRECT  
-    <<: *use  
+      - Proxies  
+    # Microsoft 组默认直连，需要走代理时切换到 Proxies 组
   
   - name: Apple  
     icon: https://raw.githubusercontent.com/NB921/picture/refs/heads/main/Apple.png  
