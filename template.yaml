@@ -26,7 +26,8 @@ p: &p
 # 其他部分保持不动即可  
   
 # 也可以把分割线以内的内容粘贴到您使用代理工具的「覆写」功能，然后在覆写中进行修改  
-# 使用覆写时可以直接将此配置文件作为订阅链接进行订阅  
+# 注意：本文件是模板，含 {{SUB_NAME}} / {{SUB_URL}} 占位符，不能直接当订阅链接使用
+# 需要用页面生成一次，生成后的文件才能订阅或导入 mihomo
 # https://gist.githubusercontent.com/liuran001/5ca84f7def53c70b554d3f765ff86a33/raw/config.yaml  
   
 # 如果你需要使用大于两个机场，在下方 `use` 处添加 `订阅三` （名字可以自己取），然后在 `proxy-providers` 照例添加订阅链接即可  
@@ -98,8 +99,9 @@ unified-delay: true
 # TCP 并发  
 # 同时对所有ip进行连接，返回延迟最低的地址，但有被误判为攻击的风险
 tcp-concurrent: false
-# 外部控制端口  
-external-controller: :9090  
+# 外部控制端口，默认只监听本机
+# 需要在手机上访问面板时改成 :9090，并同时设置 secret，否则同一局域网的其他设备可以改配置
+external-controller: 127.0.0.1:9090
   
 geodata-mode: true  
   
@@ -123,8 +125,7 @@ find-process-mode: strict
 # https://github.com/vernesong/OpenClash/issues/2614  
 keep-alive-interval: 1800  
   
-# 全局客户端指纹  
-global-client-fingerprint: chrome
+# 全局客户端指纹已从 mihomo 移除，需要指定时写在单个节点的 client-fingerprint 上
   
 # 缓存  
 profile:  
@@ -174,9 +175,8 @@ dns:
   respect-rules: false
   # 本地 DNS 监听端口，默认是 1053 端口  
   listen: 0.0.0.0:1053  
-  # 可选缓存/TTL 设置，提高并发解析性能  
-  cache-size: 4096  
-  cache-ttl: 150
+  # 可选缓存设置，提高并发解析性能
+  cache-max-size: 4096
   enhanced-mode: fake-ip  
   
   direct-nameserver-follow-policy: false  
@@ -184,7 +184,7 @@ dns:
   fake-ip-range: 198.18.0.1/16
   fake-ip-filter-mode: blacklist  
   fake-ip-filter:  
-    - 'geosite:connectivity-check'
+    - 'captive.apple.com'
     - 'stun.*.*'
     - 'stun.*.*.*'
     - '+.stun.*.*'
@@ -389,6 +389,7 @@ proxy-groups:
     <<: *use  
   
   - name: Microsoft  
+    type: select
     icon: https://raw.githubusercontent.com/NB921/picture/refs/heads/main/microsoft.png  
     proxies:  
       - DIRECT  
