@@ -179,7 +179,17 @@ dns:
   cache-max-size: 4096
   enhanced-mode: fake-ip  
   
-  direct-nameserver-follow-policy: false  
+  # 直连流量（DNS 查询本身除外）使用的 DNS
+  # 首次启动时还没有节点，拉取订阅的连接只能走 DIRECT；如果沿用下面 nameserver-policy 里的国外 DNS，
+  # 解析会被阻断，订阅就拿不到。这里固定用国内 DoH，保证首启也能解析。
+  direct-nameserver:
+    - 'https://223.5.5.5/dns-query'
+    - 'https://doh.pub/dns-query'
+    - 'https://dns.alidns.com/dns-query'
+    - 'https://doh.360.cn/dns-query'
+    - 'tls://223.5.5.5'
+  # 必须保持 false：改成 true 会让直连流量重新套用 nameserver-policy，首启拉订阅会再次走国外 DNS
+  direct-nameserver-follow-policy: false
   
   fake-ip-range: 198.18.0.1/16
   fake-ip-filter-mode: blacklist  
